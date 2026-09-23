@@ -6,15 +6,18 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table (name = "tb_customers")
+@Table(name = "tb_customers")
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @EqualsAndHashCode(of = "id")
 public class Customer {
+
     @Id
-    @GeneratedValue(
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -32,8 +35,7 @@ public class Customer {
     private LocalDateTime createdAt;
 
     @PrePersist
-    public void prePersist(){
+    public void prePersist() {
         this.createdAt = LocalDateTime.now();
     }
 }
-
