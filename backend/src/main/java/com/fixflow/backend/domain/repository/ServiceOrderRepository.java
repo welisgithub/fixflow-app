@@ -13,4 +13,7 @@ public interface ServiceOrderRepository extends JpaRepository<ServiceOrder, Long
     Optional<ServiceOrder> findByOrderNumber(String orderNumber);
     List<ServiceOrder> findByCustomerId(Long customerId);
     List<ServiceOrder> findByStatus(OrderStatus status);
+
+    // Retorna a Entidade ServiceOrder mais recente que começa com o prefixo
+    ServiceOrder findTopByOrderNumberStartingWithOrderByOrderNumberDesc(String prefix);
 }

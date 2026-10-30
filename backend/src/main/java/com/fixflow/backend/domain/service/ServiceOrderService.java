@@ -7,10 +7,9 @@ import com.fixflow.backend.domain.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate; // Necessário para pegar o ano atual
 import java.time.LocalDateTime;
-
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class ServiceOrderService {
@@ -45,8 +44,14 @@ public class ServiceOrderService {
                     .orElseThrow(() -> new IllegalArgumentException("Técnico não encontrado com ID: " + dto.technicianId()));
         }
 
-        // Gera um número único de OS, ex: OS-A1B2C3D4
-        String generatedOrderNumber = "OS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // --- GERAÇÃO DO NÚMERO DE OS INTELIGENTE (Ex: 0101260001) ---
+        String companyCode = "01";
+        String branchCode = "01";
+        String yearCode = String.format("%02d", LocalDate.now().getYear() % 100); // Pega "26" de 2026
+
+        String prefix = companyCode + branchCode + yearCode; // Resultado: "010126"
+        String generatedOrderNumber = generateNextOrderNumber(prefix);
+        // -------------------------------------------------------------
 
         ServiceOrder order = ServiceOrder.builder()
                 .orderNumber(generatedOrderNumber)
@@ -60,6 +65,26 @@ public class ServiceOrderService {
 
         ServiceOrder savedOrder = serviceOrderRepository.save(order);
         return ServiceOrderResponseDTO.fromEntity(savedOrder);
+    }
+
+    // --- MÉTODO AUXILIAR CORRIGIDO PARA CALCULAR O SEQUENCIAL ---
+    private String generateNextOrderNumber(String prefix) {
+        // Busca a Entidade ServiceOrder mais recente que começa com o prefixo
+        ServiceOrder lastOrder = serviceOrderRepository.findTopByOrderNumberStartingWithOrderByOrderNumberDesc(prefix);
+
+        int nextSequence = 1;
+
+        if (lastOrder != null && lastOrder.getOrderNumber() != null) {
+            // Extrai a string do orderNumber da última OS e calcula o próximo número
+            String lastOrderNumber = lastOrder.getOrderNumber();
+            String sequenceStr = lastOrderNumber.substring(prefix.length());
+            nextSequence = Integer.parseInt(sequenceStr) + 1;
+        }
+
+        // Formata para 4 dígitos com zeros à esquerda (ex: 1 vira "0001")
+        String sequenceFormatted = String.format("%04d", nextSequence);
+
+        return prefix + sequenceFormatted;
     }
 
     @Transactional(readOnly = true)
